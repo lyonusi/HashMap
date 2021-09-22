@@ -20,8 +20,10 @@ type linkedList struct {
 type LinkedList interface {
 	Add(data Data)
 	Contains(data Data) (bool, Data)
+	HasNext() bool
 	IndexOf(data Data) int
 	InsertAfter(index int, data Data) error
+	Next() Data
 	Pop() (Data, error)
 	Push(data Data)
 	Remove(data Data) error
@@ -115,6 +117,10 @@ func (l *linkedList) Contains(data Data) (bool, Data) {
 	return false, nil
 }
 
+func (l *linkedList) HasNext() bool {
+	return false
+}
+
 func (l *linkedList) IndexOf(data Data) int {
 	// fmt.Printf("...Searching \"%v\" in the list...\n", data)
 	pointer := l.head
@@ -171,6 +177,10 @@ func (l *linkedList) InsertAfter(index int, data Data) error {
 		}
 	}
 
+	return nil
+}
+
+func (l *linkedList) Next() Data {
 	return nil
 }
 
