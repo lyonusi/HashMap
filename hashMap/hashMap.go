@@ -43,7 +43,7 @@ type HashMap interface {
 	Index(key string) int
 	Get(key string) (value interface{})
 	Length() int
-	// ListKeys() []string
+	ListKeys() []string
 	// ManualRehash()
 	Remove(key string) error
 	Set(key string, value interface{})
@@ -88,17 +88,37 @@ func (h *hashMap) Length() int {
 	return h.ocp
 }
 
-// func (h *hashMap) ListKeys() []string {
-// 	for i := 0; i < h.i; i++ {
-// 		for j := 0; j < h.h[i].cap; j++ {
-// 			entries := h.h[i].m[j]
-// 			if entries != nil {
-
-// 			}
-// 		}
-// 	}
-// 	return nil
-// }
+func (h *hashMap) ListKeys() []string {
+	var keyList []string
+	for i := h.i; i >= 0; i-- {
+		// fmt.Println("Func ListKeys Log-1 >> i =", i)
+		for j := 0; j < h.h[i].cap; j++ {
+			// fmt.Println("Func ListKeys Log-2 >> j =", j)
+			list := h.h[i].m[j]
+			if list != nil {
+				entries := *h.h[i].m[j]
+				// fmt.Println("Func ListKeys Log-3 >> entries =", entries)
+				if entries != nil {
+					iterator := entries.GetIterator()
+					// fmt.Println("Func ListKeys Log-4 >> iterator.HasNext =", iterator.HasNext())
+					entry := iterator.GetData()
+					// fmt.Println("Func ListKeys Log-5 >> entry =", entry)
+					data, _ := h.privateTool.convertToKeyValue(entry)
+					// fmt.Println("Func ListKeys Log-6 >> key =", data.Key)
+					keyList = append(keyList, data.Key)
+					for iterator.HasNext() {
+						iterator.Next()
+						entry = iterator.GetData()
+						data, _ := h.privateTool.convertToKeyValue(entry)
+						keyList = append(keyList, data.Key)
+						// fmt.Println("Func ListKeys Log-7 >> next =", next)
+					}
+				}
+			}
+		}
+	}
+	return keyList
+}
 
 func (k *keyValue) Compare(d list.Data) (bool, error) {
 	compareData, ok := d.(*keyValue)
@@ -311,7 +331,10 @@ func (h *hashMap) Get(key string) interface{} {
 func (h *hashMap) Remove(key string) error {
 	i, m, _ := h.privateTool.searchIfKeyExists(h, key)
 	if i != -1 && m != -1 {
-		h.h[i].m[m] = nil
+		entries := *h.h[i].m[m]
+		_, entry := entries.Contains(&keyValue{Key: key})
+		index := entries.IndexOf(entry)
+		entries.RemoveByIndex(index)
 		h.ocp--
 		h.h[i].ocp--
 	}

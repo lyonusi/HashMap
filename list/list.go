@@ -1,6 +1,8 @@
 package list
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Data interface {
 	Compare(d Data) (bool, error)
@@ -15,15 +17,25 @@ type linkedList struct {
 	length int
 	head   *node
 	tail   *node
+	listIt iterator
+}
+
+type iterator struct {
+	it *node
+}
+
+type Iterator interface {
+	HasNext() bool
+	Next() *node
+	GetData() Data
 }
 
 type LinkedList interface {
 	Add(data Data)
 	Contains(data Data) (bool, Data)
-	HasNext() bool
+	GetIterator() Iterator
 	IndexOf(data Data) int
 	InsertAfter(index int, data Data) error
-	Next() Data
 	Pop() (Data, error)
 	Push(data Data)
 	Remove(data Data) error
@@ -37,6 +49,28 @@ type LinkedList interface {
 
 func NewLinkedList() LinkedList {
 	return &linkedList{}
+}
+
+func (l *linkedList) GetIterator() Iterator {
+	// fmt.Println(l.listIt.it)
+	return &iterator{it: l.head}
+}
+
+func (i *iterator) HasNext() bool {
+	// fmt.Println(i.it.next)
+	return i.it.next != nil
+}
+
+func (i *iterator) Next() *node {
+	i.it = i.it.next
+	// fmt.Println("Next() new it = ", i.it)
+	return i.it
+}
+
+func (i *iterator) GetData() Data {
+	node := i.it
+	// fmt.Println("GetData() node =", node)
+	return node.data
 }
 
 func (l *linkedList) GetHead() (Data, error) {
@@ -117,10 +151,6 @@ func (l *linkedList) Contains(data Data) (bool, Data) {
 	return false, nil
 }
 
-func (l *linkedList) HasNext() bool {
-	return false
-}
-
 func (l *linkedList) IndexOf(data Data) int {
 	// fmt.Printf("...Searching \"%v\" in the list...\n", data)
 	pointer := l.head
@@ -177,10 +207,6 @@ func (l *linkedList) InsertAfter(index int, data Data) error {
 		}
 	}
 
-	return nil
-}
-
-func (l *linkedList) Next() Data {
 	return nil
 }
 

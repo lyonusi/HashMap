@@ -27,33 +27,34 @@ func main() {
 
 	fmt.Println("")
 	fmt.Println("")
-	hashMap.Print()
-
-	fmt.Println("")
-	fmt.Println("")
 	fmt.Println("		hashMap.Set(key3, value3)")
 	hashMap.Set("key3", "value3")
-
-	fmt.Println("")
-	fmt.Println("")
-	fmt.Println("		hashMap.Get(key2)")
-	fmt.Println(hashMap.Get("key2"))
 
 	fmt.Println("")
 	fmt.Println("")
 	fmt.Println("		hashMap.Print()")
 	hashMap.Print()
 
+	fmt.Println("")
+	fmt.Println("")
+	fmt.Println("		ListKeys()")
+	list := hashMap.ListKeys()
+	fmt.Println(list)
+
+	fmt.Println("")
+	fmt.Println("")
+	fmt.Println("		hashMap.Get(key2)")
+	fmt.Println(hashMap.Get("key2"))
+
 	fmt.Println("		hashMap.Set(key4, value4)")
 	hashMap.Set("key4", "value4")
 
-	fmt.Println("***")
-	fmt.Println("")
-	fmt.Println("")
 	fmt.Println("")
 	fmt.Println("")
 	hashMap.Print()
 
+	fmt.Println("")
+	fmt.Println("")
 	fmt.Println("		hashMap.Remove(key1)")
 	hashMap.Remove("key1")
 
@@ -64,13 +65,20 @@ func main() {
 
 	fmt.Println("")
 	fmt.Println("")
-	fmt.Println("		hashMap.Clear()")
-	hashMap.Clear()
-	fmt.Println("		hashMap.Print()")
-	hashMap.Print()
+	fmt.Println("		ListKeys()")
+	list = hashMap.ListKeys()
+	fmt.Println(list)
 
 	fmt.Println("")
 	fmt.Println("")
+	fmt.Println("		hashMap.Clear()")
+	hashMap.Clear()
+
+	fmt.Println("")
+	fmt.Println("")
+	fmt.Println("		hashMap.Print()")
+	hashMap.Print()
+
 	fmt.Println("")
 	fmt.Println("")
 	fmt.Println("")
