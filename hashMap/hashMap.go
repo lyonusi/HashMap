@@ -10,17 +10,17 @@ const (
 )
 
 type hashMap struct {
-	h           []*ht
-	i           int
-	cap         int
-	ocp         int
-	privateTool tools
+	hashMaps     []*hm
+	hashMapIndex int
+	cap          int
+	ocp          int
+	privateTool  tools
 }
 
-type ht struct {
-	m   []*list.LinkedList
-	cap int
-	ocp int
+type hm struct {
+	singleHashMap []*list.LinkedList
+	cap           int
+	ocp           int
 }
 
 type tool struct {
@@ -44,45 +44,32 @@ type HashMap interface {
 	Get(key string) (value interface{})
 	Length() int
 	ListKeys() []string
-	// ManualRehash()
+	ManualRehash()
 	Remove(key string) error
 	Set(key string, value interface{})
 	Print()
 }
 
 func (h *hashMap) Clear() {
-	h.i = 0
-	h0 := new(ht)
+	h.hashMapIndex = 0
+	h0 := new(hm)
 	h0.cap = h.cap
-	h0.m = make([]*list.LinkedList, h.cap)
-	h.h = nil
-	h.h = append(h.h, h0)
+	h0.singleHashMap = make([]*list.LinkedList, h.cap)
+	h.hashMaps = nil
+	h.hashMaps = append(h.hashMaps, h0)
 
-	h.h[h.i] = h0
+	h.hashMaps[h.hashMapIndex] = h0
 	h.ocp = 0
 }
 
-// func (h *hashMap) ManualRehash() {
-// 	fmt.Println(".................... Current number of hash map ....................", i+1)
-
-// 	for i := 0; i < h.i; i++ {
-// 		fmt.Printf("hashMap.h[%v].cap = %v\n", i, h.h[i].cap)
-// 		fmt.Printf("hashMap.h[%v].ocp = %v\n", i, h.h[i].ocp)
-
-// 		for j := 0; j < h.h[i].cap; j++ {
-// 			entries := h.h[i].m[j]
-// 			if entries == nil {
-// 				fmt.Printf("hashMap.h[%v].%v = (nil)\n", i, j)
-// 			} else {
-// 				l := *h.h[i].m[j]
-// 				fmt.Printf("hashMap.h[%v].%v  ---> \n", i, j)
-
-// 				h.privateTool.moveToNewHash(h, i, j, _)
-
-// 			}
-// 		}
-// 	}
-// }
+func (h *hashMap) ManualRehash() {
+	list := h.ListKeys()
+	numOfKeys := len(list)
+	for i := 0; i < numOfKeys; i++ {
+		// fmt.Println("Func ManualRehash Log-1 >> i =", i)
+		h.Get(list[i])
+	}
+}
 
 func (h *hashMap) Length() int {
 	return h.ocp
@@ -90,13 +77,13 @@ func (h *hashMap) Length() int {
 
 func (h *hashMap) ListKeys() []string {
 	var keyList []string
-	for i := h.i; i >= 0; i-- {
+	for i := h.hashMapIndex; i >= 0; i-- {
 		// fmt.Println("Func ListKeys Log-1 >> i =", i)
-		for j := 0; j < h.h[i].cap; j++ {
+		for j := 0; j < h.hashMaps[i].cap; j++ {
 			// fmt.Println("Func ListKeys Log-2 >> j =", j)
-			list := h.h[i].m[j]
+			list := h.hashMaps[i].singleHashMap[j]
 			if list != nil {
-				entries := *h.h[i].m[j]
+				entries := *h.hashMaps[i].singleHashMap[j]
 				// fmt.Println("Func ListKeys Log-3 >> entries =", entries)
 				if entries != nil {
 					iterator := entries.GetIterator()
@@ -107,8 +94,9 @@ func (h *hashMap) ListKeys() []string {
 					// fmt.Println("Func ListKeys Log-6 >> key =", data.Key)
 					keyList = append(keyList, data.Key)
 					for iterator.HasNext() {
-						iterator.Next()
 						entry = iterator.GetData()
+
+						iterator.Next()
 						data, _ := h.privateTool.convertToKeyValue(entry)
 						keyList = append(keyList, data.Key)
 						// fmt.Println("Func ListKeys Log-7 >> next =", next)
@@ -133,33 +121,44 @@ func NewHashMap(capacity int) HashMap {
 	// if capacity < 16 {
 	// 	capacity = 16
 	// }
-	h := new(hashMap)
-	h.cap = capacity
-	h.i = 0
 
-	h0 := new(ht)
-	h0.cap = capacity
-	h0.m = make([]*list.LinkedList, capacity)
-	h.h = append(h.h, h0)
-
-	h.h[h.i] = h0
-	// fmt.Println("Func NewHasMap Log-1 >> h.m =", h.m)
-
-	h.privateTool = &tool{}
+	h := &hashMap{
+		cap:          capacity,
+		hashMapIndex: 0,
+		hashMaps: []*hm{{
+			cap:           capacity,
+			singleHashMap: make([]*list.LinkedList, capacity),
+		},
+		},
+		privateTool: &tool{},
+	}
 	return h
 }
 
 func Expand(h *hashMap) HashMap {
-	newH := new(ht)
-	newH.cap = 2 * h.h[h.i].cap
-	newH.m = make([]*list.LinkedList, newH.cap)
-	h.h = append(h.h, newH)
+	// newH := &hm{
+	// 	cap:           2 * h.hashMaps[h.hashMapIndex].cap,
+	// 	singleHashMap: make([]*list.LinkedList, 2*h.hashMaps[h.hashMapIndex].cap),
+	// }
+	newH := new(hm)
+	newH.cap = 2 * h.hashMaps[h.hashMapIndex].cap
+	newH.singleHashMap = make([]*list.LinkedList, newH.cap)
 
+	// fmt.Println("******expand", newH.cap, newH.singleHashMap)
+
+	// h = &hashMap{
+	// 	hashMaps:     append(h.hashMaps, newH),
+	// 	cap:          newH.cap,
+	// 	hashMapIndex: h.hashMapIndex + 1,
+	// }
+
+	h.hashMaps = append(h.hashMaps, newH)
 	h.cap = newH.cap
-	h.i++
-	// fmt.Println("Func Expand Log-1 >> hashMaps.i =", h.i)
-	h.h[h.i] = newH
-	// fmt.Printf("Func Expand Log-2 >> hashMaps.h[%v] = %v\n", h.i, newH.m)
+	h.hashMapIndex++
+	h.hashMaps[h.hashMapIndex] = newH
+
+	// fmt.Println("******expand2", h.cap, h.hashMapIndex, h.hashMaps[h.hashMapIndex])
+
 	return h
 }
 
@@ -177,19 +176,19 @@ func (h *hashMap) Print() {
 	fmt.Println("======================== PRINTING ========================")
 	fmt.Println("hashMap total cap =", h.cap)
 	fmt.Println("hashMap total ocp =", h.ocp)
-	fmt.Println("hashMap.h --->", h.h)
+	fmt.Println("hashMap.h --->", h.hashMaps)
 
-	for i := 0; i <= h.i; i++ {
-		fmt.Printf(".................... hashMap.h[%v] ....................\n", i)
-		fmt.Printf("                    hashMap.h[%v].cap = %v\n", i, h.h[i].cap)
-		fmt.Printf("                    hashMap.h[%v].ocp = %v\n", i, h.h[i].ocp)
-		fmt.Printf("                    hashMap.h[%v].m ---> %v\n", i, h.h[i].m)
-		for j := 0; j < h.h[i].cap; j++ {
-			entries := h.h[i].m[j]
+	for i := 0; i <= h.hashMapIndex; i++ {
+		fmt.Printf(".................... hashMap.hashMaps[%v] ....................\n", i)
+		fmt.Printf("                    hashMap.hashMaps[%v].cap = %v\n", i, h.hashMaps[i].cap)
+		fmt.Printf("                    hashMap.hashMaps[%v].ocp = %v\n", i, h.hashMaps[i].ocp)
+		fmt.Printf("                    hashMap.hashMaps[%v].singleHashMap ---> %v\n", i, h.hashMaps[i].singleHashMap)
+		for j := 0; j < h.hashMaps[i].cap; j++ {
+			entries := h.hashMaps[i].singleHashMap[j]
 			if entries == nil {
 				fmt.Printf("                    hashMap.%v.%v : (nil)\n", i, j)
 			} else {
-				l := *h.h[i].m[j]
+				l := *h.hashMaps[i].singleHashMap[j]
 				fmt.Printf("                    ...hashMap.%v.%v : ", i, j)
 				l.Print()
 			}
@@ -205,9 +204,9 @@ func (h *hashMap) Index(key string) int {
 
 func (h *hashMap) Set(key string, value interface{}) {
 	newEntry := &keyValue{Key: key, Value: value}
-	i, m, _ := h.privateTool.searchIfKeyExists(h, key) //Check if key exists in the hashmap
+	hashMapIndex, entryIndex, _ := h.privateTool.searchIfKeyExists(h, key) //Check if key exists in the hashmap
 
-	if i != -1 && m != -1 { // if key exists...
+	if hashMapIndex != -1 && entryIndex != -1 { // if key exists...
 		// fmt.Println("Func Set Log-1 >> equal? =", currentEntry == newEntry)
 
 		h.Remove(key) // remove current entry
@@ -216,109 +215,46 @@ func (h *hashMap) Set(key string, value interface{}) {
 		h.privateTool.addEntry(h, *newEntry) // add new entry to latest hashmap
 		// fmt.Println("Func Set Log-3 >> added:", newEntry)
 	} else if (float64(h.ocp) / float64(h.cap)) > expandFactor { // if key does not exist and hash map is occupied > 0.75
+		// fmt.Println("Func Set Log-4 >> hashMap.ocp =", h.ocp)
+
 		newH := Expand(h)
-		index := newH.Index(key)
+		entryIndex := newH.Index(key)
 		newEntries := list.NewLinkedList()
 		// fmt.Println("Func Set Log-5 >> New entry (expanded) =", newEntry)
-		h.h[h.i].m[index] = &newEntries
+		h.hashMaps[h.hashMapIndex].singleHashMap[entryIndex] = &newEntries
 		newEntries.Add(newEntry)
 		h.ocp++
 		// fmt.Println("Func Set Log-6 >> Expanded hashMap.ocp =", h.ocp)
 
-		h.h[h.i].ocp++
-		// for i := h.i; i >= 0; i-- {
-		// 	fmt.Printf("Func Set Log-7 >> Expanded hashMap.h[%v].ocp = %v\n", i, h.h[i].ocp)
-		// }
+		h.hashMaps[h.hashMapIndex].ocp++
+		for i := h.hashMapIndex; i >= 0; i-- {
+			fmt.Printf("Func Set Log-7 >> Expanded hashMap.h[%v].ocp = %v\n", i, h.hashMaps[i].ocp)
+		}
 	} else { // if key does not exist
 		h.privateTool.addEntry(h, *newEntry) // add new entry to latest hashmap
 	}
-
-	// for i := h.i; i >= 0; i-- { //Check if entry exists in the current hashMap.h[i]
-	// 	index := HashFunc(key, h.h[i].cap)
-	// 	if h.h[i].m[index] != nil { //if entry list is not nil, check if key exists
-	// 		entries := *h.h[i].m[index]
-	// 		keyExists, currentEntry := entries.Contains(newEntry)
-	// 		fmt.Println("Func Set Log-2 >> keyExists =", keyExists)
-
-	// 		if keyExists { //if key exists, compare new entry with current entry
-	// 			// fmt.Println("Func Set Log-2 >> currentEntry =", currentEntry)
-	// 			if currentEntry != newEntry { //if not equal, update entry with new entry
-	// 				entries.Remove(currentEntry)
-	// 				entries.Add(newEntry)
-	// 				// fmt.Println("Func Set Log-3 >> entry updated:", newEntry)
-	// 			} else { //if equal, do nothing
-	// 				// fmt.Println("Func Set Log-4 >> newEntry == currentEntry")
-	// 			}
-
-	// 		}
-	// 		if !keyExists {
-	// 			if (float64(h.ocp) / float64(h.cap)) > expandFactor {
-	// 				newH := Expand(h)
-	// 				index := newH.Index(key)
-	// 				e := list.NewLinkedList()
-	// 				// fmt.Println("Func Set Log-5 >> New entry (expanded) =", newEntry)
-	// 				h.h[h.i].m[index] = &e
-	// 				e.Add(newEntry)
-	// 				h.ocp++
-	// 				// fmt.Println("Func Set Log-6 >> Expanded hashMap.ocp =", h.ocp)
-
-	// 				h.h[h.i].ocp++
-
-	// 				for i := h.i; i >= 0; i-- {
-	// 					// fmt.Printf("Func Set Log-7 >> Expanded hashMap.h[%v].ocp = %v\n", i, h.h[i].ocp)
-	// 				}
-
-	// 			} else {
-	// 				index := h.Index(key)
-	// 				entries := h.h[h.i].m[index]
-	// 				if entries == nil {
-	// 					e := list.NewLinkedList()
-	// 					// fmt.Println("Func Set Log-9 >> Empty entries, created new entry =", newEntry)
-	// 					h.h[h.i].m[index] = &e
-	// 					e.Add(newEntry)
-	// 					h.ocp++
-	// 					h.h[h.i].ocp++
-	// 				} else {
-	// 					// fmt.Printf("Func Set Log-10 >> %v do not exist\n", key)
-	// 					entries := h.h[h.i].m[index]
-	// 					e := *entries
-	// 					e.Add(newEntry)
-	// 					h.ocp++
-	// 					h.h[h.i].ocp++
-	// 				}
-	// 			}
-	// 		}
-	// 	} else { //if entry list is nil, add entry to list
-	// 		entries := list.NewLinkedList()
-	// 		entries.Add(newEntry)
-	// 		h.h[i].m[index] = &entries
-	// 		h.ocp++
-	// 		h.h[i].ocp++
-	// 	}
-
-	// }
 }
 
 func (h *hashMap) Get(key string) interface{} {
 	searchEntry := &keyValue{Key: key}
 
-	for i := h.i; i >= 0; i-- { //Check if entry exists in the hashmap
-		index := HashFunc(key, h.h[i].cap)
-		if h.h[i].m[index] != nil { //if h[i] hashmap is not nil, check if key exists
-			entries := *h.h[i].m[index]
+	for i := h.hashMapIndex; i >= 0; i-- { //Check if entry exists in the hashmap
+		index := HashFunc(key, h.hashMaps[i].cap)
+		if h.hashMaps[i].singleHashMap[index] != nil { //if h[i] hashmap is not nil, check if key exists
+			entries := *h.hashMaps[i].singleHashMap[index]
 			keyExists, currentEntry := entries.Contains(searchEntry)
 			// fmt.Println("Func Get Log-1 >> keyExists =", keyExists)
 
-			entry, err := h.privateTool.convertToKeyValue(currentEntry)
-			if err != nil {
-				fmt.Println(err)
-				return err
-			}
 			if keyExists {
-				if i != h.i { // if entry is not in the latest hashmap, move to the latest hashmap h[h.i]
+				entry, err := h.privateTool.convertToKeyValue(currentEntry)
+				if err != nil {
+					fmt.Println(err)
+					return err
+				}
+				if i != h.hashMapIndex { // if entry is not in the latest hashmap, move to the latest hashmap h[h.i]
+					fmt.Println("Func Get Log-2 >> moved entry to new hash map:", i, "->", h.hashMapIndex)
 					h.Remove(key)
 					h.privateTool.addEntry(h, entry)
-					fmt.Println("Func Get Log-2 >> moved entry to new hash map:", i, "->", h.i)
 				}
 				// fmt.Println("Func Get Log-3 >> entry =", entry)
 				return entry.Value
@@ -329,14 +265,17 @@ func (h *hashMap) Get(key string) interface{} {
 }
 
 func (h *hashMap) Remove(key string) error {
-	i, m, _ := h.privateTool.searchIfKeyExists(h, key)
-	if i != -1 && m != -1 {
-		entries := *h.h[i].m[m]
+	hIndex, mIndex, _ := h.privateTool.searchIfKeyExists(h, key)
+	if hIndex != -1 && mIndex != -1 {
+		entries := *h.hashMaps[hIndex].singleHashMap[mIndex]
 		_, entry := entries.Contains(&keyValue{Key: key})
 		index := entries.IndexOf(entry)
 		entries.RemoveByIndex(index)
+		if entries.GetLength() == 0 {
+			h.hashMaps[hIndex].singleHashMap[mIndex] = nil
+		}
 		h.ocp--
-		h.h[i].ocp--
+		h.hashMaps[hIndex].ocp--
 	}
 	// fmt.Println("Func Remove Log-1 >> removed: ", currentEntry)
 	h.privateTool.emptyMapCheck(h)
@@ -347,18 +286,18 @@ func (h *hashMap) Remove(key string) error {
 
 func (t *tool) addEntry(h *hashMap, data keyValue) {
 	index := h.Index(data.Key)
-	entries := h.h[h.i].m[index]
+	entries := h.hashMaps[h.hashMapIndex].singleHashMap[index]
 	if entries == nil { // no collision, create new list
 		e := list.NewLinkedList()
 		// fmt.Println("Func Set Log-9 >> Empty entries, created new entry =", newEntry)
-		h.h[h.i].m[index] = &e
+		h.hashMaps[h.hashMapIndex].singleHashMap[index] = &e
 		e.Add(&data)
 	} else { // collision, add to current list
 		e := *entries
 		e.Add(&data)
 	}
 	h.ocp++
-	h.h[h.i].ocp++
+	h.hashMaps[h.hashMapIndex].ocp++
 }
 
 func (t *tool) convertToKeyValue(data interface{}) (keyValue, error) {
@@ -372,10 +311,10 @@ func (t *tool) convertToKeyValue(data interface{}) (keyValue, error) {
 
 func (t *tool) searchIfKeyExists(h *hashMap, key string) (int, int, interface{}) {
 	searchEntry := &keyValue{Key: key}
-	for i := h.i; i >= 0; i-- { //Check if entry exists in the hashmap
-		index := HashFunc(key, h.h[i].cap)
-		if h.h[i].m[index] != nil { //if h[i] hashmap is not nil, check if key exists
-			entries := *h.h[i].m[index]
+	for i := h.hashMapIndex; i >= 0; i-- { //Check if entry exists in the hashmap
+		index := HashFunc(key, h.hashMaps[i].cap)
+		if h.hashMaps[i].singleHashMap[index] != nil { //if h[i] hashmap is not nil, check if key exists
+			entries := *h.hashMaps[i].singleHashMap[index]
 			keyExists, currentEntry := entries.Contains(searchEntry)
 			// fmt.Println("Func searchIfKeyExists Log-1 >> keyExists =", keyExists)
 
@@ -389,13 +328,13 @@ func (t *tool) searchIfKeyExists(h *hashMap, key string) (int, int, interface{})
 }
 
 func (t *tool) emptyMapCheck(h *hashMap) error {
-	if h.i == 0 {
+	if h.hashMapIndex == 0 {
 		return fmt.Errorf("only ONE hash map exists")
 	}
-	for i := h.i; i >= 0; i-- {
-		if h.h[i].ocp == 0 {
-			h.h = append(h.h[:i], h.h[i+1:]...)
-			h.i--
+	for i := h.hashMapIndex; i >= 0; i-- {
+		if h.hashMaps[i].ocp == 0 {
+			h.hashMaps = append(h.hashMaps[:i], h.hashMaps[i+1:]...)
+			h.hashMapIndex--
 			// fmt.Println(h.h)
 			return nil
 		}

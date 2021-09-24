@@ -51,12 +51,18 @@ func main() {
 
 	fmt.Println("")
 	fmt.Println("")
+	fmt.Println("		hashMap.Print()")
 	hashMap.Print()
 
 	fmt.Println("")
 	fmt.Println("")
-	fmt.Println("		hashMap.Remove(key1)")
-	hashMap.Remove("key1")
+	fmt.Println("		hashMap.ManualRehash()")
+	hashMap.ManualRehash()
+
+	// fmt.Println("")
+	// fmt.Println("")
+	// fmt.Println("		hashMap.Remove(key1)")
+	// hashMap.Remove("key1")
 
 	fmt.Println("")
 	fmt.Println("")

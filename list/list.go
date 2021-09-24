@@ -17,7 +17,6 @@ type linkedList struct {
 	length int
 	head   *node
 	tail   *node
-	listIt iterator
 }
 
 type iterator struct {
@@ -267,7 +266,7 @@ func (l *linkedList) Remove(data Data) error {
 			if l.length == 0 {
 				l.tail = nil
 			}
-			fmt.Println("[Success!]")
+			// fmt.Println("[Success!]")
 			return nil
 		} else {
 			prevPointer = pointer
@@ -316,7 +315,7 @@ func (l *linkedList) RemoveByIndex(index int) error {
 	if l.length == 0 {
 		l.tail = nil
 	}
-	fmt.Println("[Success!]")
+	// fmt.Println("[Success!]")
 	return nil
 }
 
