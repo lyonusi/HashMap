@@ -118,9 +118,9 @@ func (k *keyValue) Compare(d list.Data) (bool, error) {
 }
 
 func NewHashMap(capacity int) HashMap {
-	// if capacity < 16 {
-	// 	capacity = 16
-	// }
+	if capacity < 16 {
+		capacity = 16
+	}
 
 	h := &hashMap{
 		cap:          capacity,
@@ -136,13 +136,13 @@ func NewHashMap(capacity int) HashMap {
 }
 
 func Expand(h *hashMap) HashMap {
-	// newH := &hm{
-	// 	cap:           2 * h.hashMaps[h.hashMapIndex].cap,
-	// 	singleHashMap: make([]*list.LinkedList, 2*h.hashMaps[h.hashMapIndex].cap),
-	// }
-	newH := new(hm)
-	newH.cap = 2 * h.hashMaps[h.hashMapIndex].cap
-	newH.singleHashMap = make([]*list.LinkedList, newH.cap)
+	newH := &hm{
+		cap:           2 * h.hashMaps[h.hashMapIndex].cap,
+		singleHashMap: make([]*list.LinkedList, 2*h.hashMaps[h.hashMapIndex].cap),
+	}
+	// newH := new(hm)
+	// newH.cap = 2 * h.hashMaps[h.hashMapIndex].cap
+	// newH.singleHashMap = make([]*list.LinkedList, newH.cap)
 
 	// fmt.Println("******expand", newH.cap, newH.singleHashMap)
 
